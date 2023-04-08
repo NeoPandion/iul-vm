@@ -1,23 +1,40 @@
+mod class;
+mod opt;
+use opt::Opt;
 use std::{
     fs::File,
     io::{BufReader, Read},
+    path::PathBuf,
 };
+use structopt::StructOpt;
 
 fn main() {
-    let buffer = read_file();
+    let args = Opt::from_args();
+    // println!("{:?}", args);
+
+    let buffer = read_file(args.input);
+    let mut c = 0;
     for i in buffer.iter() {
-        print!("{}", i.to_owned() as char);
+        print!("{:02X}", i);
+        print!(" ");
+        c += 1;
+        if c % 16 == 0 {
+            print!("\n");
+            continue;
+        }
     }
-    println!("\nEOF");
+    // println!("\nEOF");
     // cafe babe
     if !(validate_file(&buffer)) {
         panic!("Not .class file")
     }
-    println!("{:?}", (&buffer[0..4]));
+
+    println!("\n{:?}", (&buffer[0..4]));
+    version(&buffer);
 }
 
-fn read_file() -> Vec<u8> {
-    let f = match File::open("main.class") {
+fn read_file(path: PathBuf) -> Vec<u8> {
+    let f = match File::open(path) {
         Ok(a) => a,
         Err(e) => panic!("{e}"),
     };
@@ -35,4 +52,8 @@ fn validate_file(buf: &Vec<u8>) -> bool {
         }
     }
     true
+}
+fn version(buf: &Vec<u8>) {
+    println!("min Version: {:?}", buf[4..6].to_owned());
+    println!("max Version: {:?}", buf[6..8].to_owned());
 }
